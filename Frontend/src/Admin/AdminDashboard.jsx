@@ -13,6 +13,11 @@ import {
   Alert,
   Divider,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 import {
   MeetingRoom,
@@ -22,10 +27,13 @@ import {
   PersonAdd,
   Room,
   Assessment,
+  Schedule,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axios';
+import AdminBookingScheduler from '../components/AdminBookingScheduler'; // Import the new component
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -43,6 +51,12 @@ const AdminDashboard = () => {
     rejectedBookings: 0,
     teaServiceRequests: 0,
   });
+  
+  // State for Admin Booking Scheduler Dialog
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -60,6 +74,7 @@ const AdminDashboard = () => {
       // Fetch rooms
       const roomsRes = await axiosInstance.get('/rooms');
       const rooms = roomsRes.data.data || [];
+      setRooms(rooms); // Store rooms for scheduler
 
       // Fetch bookings
       const bookingsRes = await axiosInstance.get('/bookings');
@@ -91,6 +106,39 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Open schedule dialog
+  const handleOpenScheduleDialog = () => {
+    if (rooms.length === 0) {
+      setError('No rooms available to schedule. Please add rooms first.');
+      return;
+    }
+    setSelectedRoom(rooms[0]); // Select first room by default
+    setScheduleDialogOpen(true);
+  };
+
+  // Close schedule dialog
+  const handleCloseScheduleDialog = () => {
+    setScheduleDialogOpen(false);
+    setSelectedRoom(null);
+  };
+
+  // Handle successful scheduling
+  const handleScheduleSuccess = (ticketData) => {
+    console.log('✅ Schedule success:', ticketData);
+    // Refresh dashboard data
+    fetchDashboardData();
+    // Close dialog after a delay
+    setTimeout(() => {
+      handleCloseScheduleDialog();
+    }, 2000);
+  };
+
+  // Handle scheduling error
+  const handleScheduleError = (error) => {
+    console.error('❌ Schedule error:', error);
+    // Error is already shown in the scheduler component
   };
 
   if (loading) {
@@ -243,6 +291,46 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
 
+        {/* NEW: Admin Schedule Section */}
+        <Paper
+          elevation={2}
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            mb: 4,
+            background: 'linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%)',
+            border: '1px solid #90caf9',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Schedule sx={{ fontSize: 40, color: '#1976d2' }} />
+              <Box>
+                <Typography variant="h6" fontWeight="bold" color="primary">
+                  Admin Booking Scheduler
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Schedule approved meetings for users to book
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<Schedule />}
+              onClick={handleOpenScheduleDialog}
+              sx={{ 
+                py: 1.5,
+                px: 4,
+                bgcolor: '#1976d2',
+                '&:hover': { bgcolor: '#1565c0' }
+              }}
+            >
+              Schedule New Meeting
+            </Button>
+          </Box>
+        </Paper>
+
         {/* Booking Statistics */}
         <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 4 }}>
@@ -292,6 +380,97 @@ const AdminDashboard = () => {
           </Grid>
         </Paper>
       </Container>
+
+      {/* Admin Booking Scheduler Dialog */}
+      <Dialog
+        open={scheduleDialogOpen}
+        onClose={handleCloseScheduleDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            maxHeight: '90vh',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          bgcolor: 'primary.main', 
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Schedule />
+            <Typography variant="h6" fontWeight="bold">
+              Schedule Meeting
+            </Typography>
+          </Box>
+          <IconButton onClick={handleCloseScheduleDialog} sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ p: 3 }}>
+          {/* Room Selector */}
+          {rooms.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Select Room to Schedule
+              </Typography>
+              <Grid container spacing={1}>
+                {rooms.map((room) => (
+                  <Grid item key={room._id}>
+                    <Button
+                      variant={selectedRoom?._id === room._id ? 'contained' : 'outlined'}
+                      size="small"
+                      onClick={() => setSelectedRoom(room)}
+                      sx={{ 
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        ...(selectedRoom?._id === room._id && {
+                          bgcolor: '#1976d2',
+                          '&:hover': { bgcolor: '#1565c0' }
+                        })
+                      }}
+                    >
+                      {room.roomName}
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
+
+          {/* Admin Booking Scheduler Component */}
+          {selectedRoom && (
+            <AdminBookingScheduler
+              room={selectedRoom}
+              user={user}
+              onSuccess={handleScheduleSuccess}
+              onError={handleScheduleError}
+              onCancel={handleCloseScheduleDialog}
+            />
+          )}
+
+          {rooms.length === 0 && (
+            <Alert severity="warning">
+              No rooms available. Please add rooms first.
+              <Button
+                size="small"
+                onClick={() => {
+                  handleCloseScheduleDialog();
+                  navigate('/admin/rooms');
+                }}
+                sx={{ ml: 2 }}
+              >
+                Add Room
+              </Button>
+            </Alert>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
