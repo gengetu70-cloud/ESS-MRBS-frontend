@@ -19,6 +19,7 @@ import {
   ListItemText,
   useMediaQuery,
   useTheme,
+  Divider,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -29,6 +30,8 @@ import {
   Home as HomeIcon,
   Login as LoginIcon,
   Dashboard as DashboardIcon,
+  Info as InfoIcon,
+  ContactMail as ContactIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -50,9 +53,9 @@ const Navbar = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleClose();
-    logout();
+    await logout();
     navigate('/');
   };
 
@@ -60,20 +63,35 @@ const Navbar = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  // Navigation items for profile dropdown
+  const getProfileMenuItems = () => {
+    const items = [];
+    
+    // Admin - Only for admin users
+    if (isAdmin) {
+      items.push({ text: 'Admin Dashboard', icon: <AdminPanelSettings />, path: '/admin' });
+    }
+    
+    // Dashboard - Only for authenticated users
+    if (isAuthenticated) {
+      items.push({ text: 'User Dashboard', icon: <DashboardIcon />, path: '/dashboard' });
+    }
+    
+    // Home - Always show
+    items.push({ text: 'Home', icon: <HomeIcon />, path: '/' });
+    
+    // Contact - Always show
+    items.push({ text: 'Contact', icon: <ContactIcon />, path: '/contact' });
+    
+    // About - Always show
+    items.push({ text: 'About', icon: <InfoIcon />, path: '/about' });
+    
+    return items;
+  };
+
   // Menu items for mobile drawer
   const menuItems = [
-    { text: 'Home', icon: <HomeIcon />, path: '/' },
-    ...(isAuthenticated
-      ? [{ text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' }]
-      : []),
-    ...(isAdmin
-      ? [
-          { text: 'Admin Panel', icon: <AdminPanelSettings />, path: '/admin' },
-          { text: 'Manage Users', icon: <Person />, path: '/admin/users' },
-          { text: 'Manage Rooms', icon: <MeetingRoom />, path: '/admin/rooms' },
-          { text: 'Reports', icon: <AdminPanelSettings />, path: '/admin/reports' },
-        ]
-      : []),
+    { text: 'Login', icon: <LoginIcon />, path: '/login' },
   ];
 
   const drawer = (
@@ -81,6 +99,7 @@ const Navbar = () => {
       <Typography variant="h6" sx={{ my: 2 }}>
         ESS MRBS
       </Typography>
+      <Divider />
       <List>
         {menuItems.map((item) => (
           <ListItem
@@ -107,7 +126,14 @@ const Navbar = () => {
 
   return (
     <>
-      <AppBar position="sticky" color="primary" elevation={2}>
+      <AppBar 
+        position="sticky" 
+        color="primary" 
+        elevation={2}
+        sx={{
+          backgroundColor: '#09306b',
+        }}
+      >
         <Container maxWidth="xl">
           <Toolbar disableGutters>
             <IconButton
@@ -120,6 +146,43 @@ const Navbar = () => {
               <MenuIcon />
             </IconButton>
 
+            {/* Logo - Only the circle logo, no text */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                mr: 1,
+              }}
+              onClick={() => navigate('/')}
+            >
+              <Box
+                component="img"
+                src="/logo.png"
+                alt="ESS MRBS Logo"
+                sx={{
+                  height: 40,
+                  width: 40,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              />
+              <Box
+                component="img"
+                src="/logo.png"
+                alt="ESS MRBS Logo"
+                sx={{
+                  height: 32,
+                  width: 32,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  display: { xs: 'block', sm: 'none' },
+                }}
+              />
+            </Box>
+
+            {/* ESS MRBS Text */}
             <Typography
               variant="h6"
               noWrap
@@ -127,60 +190,29 @@ const Navbar = () => {
               sx={{
                 flexGrow: 1,
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
+                fontWeight: 600,
+                letterSpacing: 1,
+                color: '#ffffff',
               }}
               onClick={() => navigate('/')}
             >
-              <MeetingRoom sx={{ fontSize: 28 }} />
               ESS MRBS
             </Typography>
 
-            {/* Desktop Menu */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
-              <Button
-                color="inherit"
-                onClick={() => navigate('/')}
-                startIcon={<HomeIcon />}
-                sx={{
-                  backgroundColor: location.pathname === '/' ? 'rgba(255,255,255,0.15)' : 'transparent',
-                }}
-              >
-                Home
-              </Button>
-
-              {isAuthenticated && (
-                <Button
-                  color="inherit"
-                  onClick={() => navigate('/dashboard')}
-                  startIcon={<DashboardIcon />}
-                  sx={{
-                    backgroundColor: location.pathname === '/dashboard' ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  }}
-                >
-                  Dashboard
-                </Button>
-              )}
-
-              {isAdmin && (
-                <Button
-                  color="inherit"
-                  onClick={() => navigate('/admin')}
-                  startIcon={<AdminPanelSettings />}
-                  sx={{
-                    backgroundColor: location.pathname === '/admin' ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  }}
-                >
-                  Admin
-                </Button>
-              )}
-
+            {/* Desktop Menu - Only Login button for non-authenticated users */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center' }}>
               {!isAuthenticated && (
                 <Button
                   color="inherit"
                   onClick={() => navigate('/login')}
                   startIcon={<LoginIcon />}
+                  sx={{
+                    color: '#ffffff',
+                    backgroundColor: location.pathname === '/login' ? 'rgba(255,255,255,0.15)' : 'transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                    },
+                  }}
                 >
                   Login
                 </Button>
@@ -192,7 +224,7 @@ const Navbar = () => {
               <Box sx={{ ml: 2 }}>
                 <Tooltip title="Account settings">
                   <IconButton onClick={handleMenu} color="inherit">
-                    <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
+                    <Avatar sx={{ bgcolor: '#08133b', width: 40, height: 40 }}>
                       {user?.fullName?.[0] || 'U'}
                     </Avatar>
                   </IconButton>
@@ -211,12 +243,28 @@ const Navbar = () => {
                     </Typography>
                   </MenuItem>
                   <MenuItem divider />
-                  {isAdmin && (
-                    <MenuItem onClick={() => { handleClose(); navigate('/admin/users'); }}>
-                      <ListItemIcon><Person fontSize="small" /></ListItemIcon>
-                      <ListItemText>Manage Users</ListItemText>
+                  
+                  {/* Profile Menu Items in Order: Admin, Dashboard, Home, Contact, About */}
+                  {getProfileMenuItems().map((item) => (
+                    <MenuItem 
+                      key={item.text}
+                      onClick={() => { 
+                        handleClose(); 
+                        navigate(item.path); 
+                      }}
+                      selected={location.pathname === item.path}
+                      sx={{
+                        '&.Mui-selected': {
+                          backgroundColor: 'primary.light',
+                        },
+                      }}
+                    >
+                      <ListItemIcon>{item.icon}</ListItemIcon>
+                      <ListItemText>{item.text}</ListItemText>
                     </MenuItem>
-                  )}
+                  ))}
+                  
+                  <MenuItem divider />
                   <MenuItem onClick={handleLogout}>
                     <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
                     <ListItemText>Logout</ListItemText>
@@ -243,5 +291,5 @@ const Navbar = () => {
     </>
   );
 };
-
+ 
 export default Navbar;
