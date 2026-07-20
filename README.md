@@ -15,7 +15,7 @@ The ESS Meeting Room Booking System (ESS-MRBS) Frontend is a React-based web app
 - CSS3
 - Axios
 - React Router DOM
-
+- 
 ---
 
 ## Tech Stack
@@ -23,13 +23,15 @@ The ESS Meeting Room Booking System (ESS-MRBS) Frontend is a React-based web app
 ### Frontend
 - React.js
 - Vite
-- Material UI
 
 ### API Communication
 - Axios
 
 ### Routing
 - React Router DOM
+
+### API Testing
+- Postman
 
 ### Development Tools
 | Tool | Purpose |
@@ -38,9 +40,13 @@ The ESS Meeting Room Booking System (ESS-MRBS) Frontend is a React-based web app
 | Postman | API testing |
 | Git | Version control |
 | GitHub | Remote repository |
+---
+
+---
 
 ## Project Structure
 
+```
 frontend/
 │
 ├── public/
@@ -60,30 +66,47 @@ frontend/
 ├── package.json
 ├── package-lock.json
 ├── vite.config.js
+```
+
 ---
 
 ## Installation
 
 Clone the repository
 
+```bash
 git clone https://github.com/gengetu70-cloud/ESS-MRBS-frontend.git
+```
 
 Go to the frontend folder
 
+```bash
 cd frontend
+```
 
 Install dependencies
 
+```bash
 npm install
-create a .env file
+```
+Create a .env file
+
+```env
 VITE_API_URL=http://localhost:5000/api
+```
+
 Start the development server
 
+```bash
 npm run dev
+```
 
 The application will run at:
 
+```
 http://localhost:5173
+```
+
 ---
 
 ## Features
@@ -95,7 +118,7 @@ http://localhost:5173
 - Meeting Schedule Management
 - Booking Management
 - Reports Dashboard
-- 
+
 ### Registered User
 
 - Login
@@ -108,11 +131,13 @@ http://localhost:5173
 
 ## Developers
 
-Haramaya University Students: 
+Haramaya University Students
+
 - Genet Getu, 
+- Halima Siraj, 
 - Gezu Kotu, 
-- Halima Siraj,
-  
+
+
 Developed for Ethiopian Statistical Service (ESS)
 
 2026
