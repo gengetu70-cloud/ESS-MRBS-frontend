@@ -63,7 +63,7 @@ const ImageSlideshow = () => {
             left: 0,
             right: 0,
             height: '60%',
-            background: 'linear-gradient(to top, rgba(8, 71, 165, 0.9) 0%, rgba(6, 99, 238, 0.4) 50%, transparent 100%)',
+            background: 'linear-gradient(to top, rgba(6, 51, 102, 0.9) 0%, rgba(68, 33, 193, 0.4) 50%, transparent 100%)',
           }}
         />
 
@@ -103,7 +103,7 @@ const ImageSlideshow = () => {
               animation: 'slideUp 0.8s ease-out 0.2s both',
             }}
           >
-            {currentIndex === 0 && 'Intelligent meeting room booking system for modern enterprises'}
+            {currentIndex === 0 && 'meeting room booking system for modern enterprises'}
             {currentIndex === 1 && 'Find and book the perfect meeting space instantly'}
             {currentIndex === 2 && 'Streamlined scheduling with real-time availability'}
             {currentIndex === 3 && 'Check room status and book on the go'}

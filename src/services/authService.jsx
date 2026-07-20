@@ -5,7 +5,8 @@ export const login = async (username, password) => {
   try {
     const response = await axiosInstance.post('/auth/login', { username, password });
     if (response.data.success) {
-      localStorage.setItem('token', response.data.token);
+      // Token is automatically stored in HttpOnly cookie by backend
+      // Only store user data in localStorage
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     return response.data;
@@ -18,6 +19,12 @@ export const login = async (username, password) => {
 export const getCurrentUser = async () => {
   try {
     const response = await axiosInstance.get('/auth/me');
+    if (response.data.success) {
+      const user = response.data.user || response.data.data;
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+    }
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to get user' };
@@ -25,15 +32,20 @@ export const getCurrentUser = async () => {
 };
 
 // Logout user
-export const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = '/login';
+export const logout = async () => {
+  try {
+    await axiosInstance.post('/auth/logout');
+  } catch (error) {
+    console.error('Logout API error:', error);
+  } finally {
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
 };
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
-  return !!localStorage.getItem('token');
+  return !!localStorage.getItem('user');
 };
 
 // Get stored user

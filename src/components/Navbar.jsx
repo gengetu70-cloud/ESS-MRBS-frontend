@@ -53,9 +53,9 @@ const Navbar = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleClose();
-    logout();
+    await logout();
     navigate('/');
   };
 
@@ -89,10 +89,41 @@ const Navbar = () => {
     return items;
   };
 
+  // Get navbar items based on user role
+  const getNavbarItems = () => {
+    if (isAdmin) {
+      return [
+        { text: 'Home', icon: <HomeIcon />, path: '/' },
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+        { text: 'AdminDashboard', icon: <AdminPanelSettings />, path: '/admin' },
+        { text: 'Contact', icon: <ContactIcon />, path: '/contact' },
+        { text: 'About', icon: <InfoIcon />, path: '/about' },
+      ];
+    } else if (isAuthenticated) {
+      return [
+        { text: 'Home', icon: <HomeIcon />, path: '/' },
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+        { text: 'Contact', icon: <ContactIcon />, path: '/contact' },
+        { text: 'About', icon: <InfoIcon />, path: '/about' },
+      ];
+    }
+    return [];
+  };
+
   // Menu items for mobile drawer
-  const menuItems = [
-    { text: 'Login', icon: <LoginIcon />, path: '/login' },
-  ];
+  const getMobileMenuItems = () => {
+    const items = [];
+    
+    if (isAuthenticated) {
+      // Add navbar items for authenticated users
+      items.push(...getNavbarItems());
+      items.push({ text: 'Logout', icon: <Logout />, action: handleLogout });
+    } else {
+      items.push({ text: 'Login', icon: <LoginIcon />, path: '/login' });
+    }
+    
+    return items;
+  };
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
@@ -101,11 +132,17 @@ const Navbar = () => {
       </Typography>
       <Divider />
       <List>
-        {menuItems.map((item) => (
+        {getMobileMenuItems().map((item) => (
           <ListItem
             button
             key={item.text}
-            onClick={() => navigate(item.path)}
+            onClick={() => {
+              if (item.action) {
+                item.action();
+              } else if (item.path) {
+                navigate(item.path);
+              }
+            }}
             selected={location.pathname === item.path}
             sx={{
               '&.Mui-selected': {
@@ -126,7 +163,14 @@ const Navbar = () => {
 
   return (
     <>
-      <AppBar position="sticky" color="primary" elevation={2}>
+      <AppBar 
+        position="sticky" 
+        color="primary" 
+        elevation={2}
+        sx={{
+          backgroundColor: '#09306b',
+        }}
+      >
         <Container maxWidth="xl">
           <Toolbar disableGutters>
             <IconButton
@@ -185,20 +229,42 @@ const Navbar = () => {
                 cursor: 'pointer',
                 fontWeight: 600,
                 letterSpacing: 1,
+                color: '#ffffff',
               }}
               onClick={() => navigate('/')}
             >
               ESS MRBS
             </Typography>
 
-            {/* Desktop Menu - Only Login button for non-authenticated users */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center' }}>
-              {!isAuthenticated && (
+            {/* Desktop Menu - Navbar items from left to right */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4, alignItems: 'center' }}>
+              {isAuthenticated ? (
+                // Show navbar items for authenticated users
+                getNavbarItems().map((item) => (
+                  <Button
+                    key={item.text}
+                    color="inherit"
+                    onClick={() => navigate(item.path)}
+                    startIcon={item.icon}
+                    sx={{
+                      color: '#ffffff',
+                      backgroundColor: location.pathname === item.path ? 'rgba(255,255,255,0.15)' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                      },
+                    }}
+                  >
+                    {item.text}
+                  </Button>
+                ))
+              ) : (
+                // Show Login button for non-authenticated users
                 <Button
                   color="inherit"
                   onClick={() => navigate('/login')}
                   startIcon={<LoginIcon />}
                   sx={{
+                    color: '#ffffff',
                     backgroundColor: location.pathname === '/login' ? 'rgba(255,255,255,0.15)' : 'transparent',
                     '&:hover': {
                       backgroundColor: 'rgba(255,255,255,0.1)',
@@ -212,10 +278,10 @@ const Navbar = () => {
 
             {/* User Avatar & Menu */}
             {isAuthenticated && (
-              <Box sx={{ ml: 2 }}>
+              <Box sx={{ ml: 4 }}>
                 <Tooltip title="Account settings">
                   <IconButton onClick={handleMenu} color="inherit">
-                    <Avatar sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }}>
+                    <Avatar sx={{ bgcolor: '#08133b', width: 40, height: 40 }}>
                       {user?.fullName?.[0] || 'U'}
                     </Avatar>
                   </IconButton>
@@ -282,5 +348,5 @@ const Navbar = () => {
     </>
   );
 };
- 
+
 export default Navbar;

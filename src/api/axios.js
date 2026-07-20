@@ -5,19 +5,16 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
+  withCredentials: true,  // ← CRITICAL: Send cookies automatically
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 30000, // 30 seconds timeout
 });
 
-// Request interceptor to add token
+// Request interceptor - REMOVED token from headers (now using cookies)
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     console.log('📡 API Request:', config.method.toUpperCase(), config.baseURL + config.url);
     return config;
   },
@@ -46,7 +43,6 @@ axiosInstance.interceptors.response.use(
       
       // Don't redirect if it's a public endpoint
       if (!isPublicEndpoint) {
-        localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
       }

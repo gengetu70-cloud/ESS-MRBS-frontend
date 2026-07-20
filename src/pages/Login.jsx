@@ -123,7 +123,7 @@ const Login = () => {
               boxShadow: '0 8px 40px rgba(0,0,0,0.08)',
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
+            <Avatar sx={{ m: 1, bgcolor: '#064097', width: 56, height: 56 }}>
               <LockOutlinedIcon sx={{ fontSize: 28 }} />
             </Avatar>
 
@@ -182,6 +182,7 @@ const Login = () => {
                   borderRadius: '50px',
                   fontSize: '1rem',
                   fontWeight: 600,
+                  bgcolor:'#084baf',
                   textTransform: 'none',
                 }}
                 disabled={loading || !username.trim() || !password.trim()}

@@ -28,8 +28,10 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
+import { useNavigate } from 'react-router-dom';
 
 const About = () => {
+  const navigate = useNavigate();
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
@@ -39,8 +41,6 @@ const About = () => {
   const coreValues = [
     { icon: <Public />, title: 'Data Integrity', desc: 'Ensuring accuracy and reliability in all statistical data' },
     { icon: <Security />, title: 'Confidentiality', desc: 'Protecting sensitive information with utmost care' },
-    { icon: <Speed />, title: 'Timeliness', desc: 'Delivering data and reports in a timely manner' },
-    { icon: <Analytics />, title: 'Innovation', desc: 'Embracing technology and modern methodologies' },
     { icon: <People />, title: 'Public Service', desc: 'Serving the nation with dedication and transparency' },
   ];
 
@@ -54,12 +54,12 @@ const About = () => {
   return (
     <>
       <Navbar />
-      <Box sx={{ bgcolor: '#f5f7fa', minHeight: '100vh' }}>
+      <Box sx={{ bgcolor: '#dadee8', minHeight: '100vh' }}>
         
         {/* Hero Section */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #0a1628 0%, #0d47a1 40%, #1565c0 70%, #42a5f5 100%)',
+            background: '#dde1ea',
             color: 'white',
             py: { xs: 6, md: 10 },
             position: 'relative',
@@ -88,24 +88,6 @@ const About = () => {
             <Fade in={animated} timeout={1000}>
               <Box textAlign="center">
                 <motion.div
-                  initial={{ y: -30, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <Chip
-                    icon={<AutoAwesome sx={{ fontSize: 20 }} />}
-                    label="About ESS"
-                    sx={{
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                      color: 'white',
-                      mb: 3,
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  />
-                </motion.div>
-
-                <motion.div
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
@@ -114,29 +96,11 @@ const About = () => {
                     variant="h2"
                     fontWeight="600"
                     sx={{
-                      fontSize: { xs: '2rem', md: '3.5rem' },
+                     fontSize: { xs: '2rem', md: '2.5rem',color:'black' },
                       mb: 2,
                     }}
                   >
                     About Ethiopian Statistics Service
-                  </Typography>
-                </motion.div>
-
-                <motion.div
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                >
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontSize: { xs: '1rem', md: '1.3rem' },
-                      opacity: 0.9,
-                      maxWidth: 800,
-                      mx: 'auto',
-                    }}
-                  >
-                    Empowering Ethiopia through reliable statistics and data-driven decision making
                   </Typography>
                 </motion.div>
               </Box>
@@ -303,36 +267,79 @@ const About = () => {
               ))}
             </Grid>
           </motion.div>
+          
+        </Container>
 
-          {/* Statistics */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <Box sx={{ mt: 6, bgcolor: 'white', p: 5, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-              <Grid container spacing={4}>
-                {[
-                  { number: '50+', label: 'Years of Service' },
-                  { number: '1000+', label: 'Statistical Reports' },
-                  { number: '200+', label: 'Expert Staff' },
-                  { number: '100%', label: 'Data Integrity' },
-                ].map((stat, index) => (
-                  <Grid item xs={6} md={3} key={index}>
-                    <Box textAlign="center">
-                      <Typography variant="h3" fontWeight="700" color="#0d47a1">
-                        {stat.number}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {stat.label}
-                      </Typography>
-                    </Box>
-                  </Grid>
+        {/* ==========================================
+            FOOTER - ESS Style
+            ========================================== */}
+        <Box sx={{ bgcolor: '#0a255c', color: 'rgba(255,255,255,0.7)', py: 4 }}>
+          <Container maxWidth="lg">
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 2 }}>
+                  የኢትዮጵያ ስታቲስቲክስ አገልግሎት
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+                  ETHIOPIAN STATISTICAL SERVICE
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.3)', mt: 2, fontSize: '0.8rem' }}>
+                  HEADQUARTERS
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                  Ethiopian Statistical Service (ESS)
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                  2QH3+9P8, Churchill Road, Addis Ababa
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                  Tele: +251-11553112, +251-11553011
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                  P.O.Box: 1143
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>
+                  Email: info@ess.gov.et
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="body2" sx={{ color: 'white', fontWeight: 500, mb: 2 }}>
+                  Quick Links
+                </Typography>
+                {['Home', 'About', 'Contact'].map((link) => (
+                  <Typography
+                    key={link}
+                    variant="body2"
+                    onClick={() => {
+                      if (link === 'About') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else if (link === 'Home') {
+                        navigate('/Home');
+                      }
+                      else if (link === 'Contact') {
+                        navigate('/contact');
+                      }
+                    }}
+                    sx={{
+                      color: 'rgba(255,255,255,0.4)',
+                      cursor: 'pointer',
+                      py: 0.5,
+                      fontSize: '0.8rem',
+                      transition: 'color 0.2s',
+                      '&:hover': { color: '#85b8e2' },
+                    }}
+                  >
+                    {link}
+                  </Typography>
                 ))}
               </Grid>
-            </Box>
-          </motion.div>
-        </Container>
+            </Grid>
+            <Divider sx={{ mb: 3, borderColor: 'rgba(255,255,255,0.06)' }} />
+            <Typography variant="body2" textAlign="center" sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
+              © 2026 All Rights Reserved. Ethiopian Statistical Service
+            </Typography>
+          </Container>
+        </Box>
 
         <style>
           {`

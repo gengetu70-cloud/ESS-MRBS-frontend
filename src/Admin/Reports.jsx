@@ -52,7 +52,7 @@ const Reports = () => {
   const [bookingTrends, setBookingTrends] = useState([]);
   const [teaServiceData, setTeaServiceData] = useState({ total: 0, withTea: 0, withoutTea: 0 });
 
-  const COLORS = ['#1976d2', '#2e7d32', '#ed6c02', '#9c27b0', '#d32f2f'];
+  const COLORS = ['#1976d2', '#05346e', '#074cac', '#0b5ac7', '#0f60d1'];
 
   useEffect(() => {
     fetchData();
@@ -318,9 +318,9 @@ const Reports = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="total" fill="#1976d2" name="Total Rooms" />
-                  <Bar dataKey="booked" fill="#ed6c02" name="Booked Rooms" />
-                  <Bar dataKey="available" fill="#2e7d32" name="Available Rooms" />
+                  <Bar dataKey="total" fill="#084e94" name="Total Rooms" />
+                  <Bar dataKey="booked" fill="#0a3869" name="Booked Rooms" />
+                  <Bar dataKey="available" fill="#0f7ff0" name="Available Rooms" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -338,7 +338,7 @@ const Reports = () => {
                   <XAxis type="number" />
                   <YAxis dataKey="roomName" type="category" width={100} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#9c27b0" name="Bookings" />
+                  <Bar dataKey="count" fill="#094ea3" name="Bookings" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -383,8 +383,8 @@ const Reports = () => {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    <Cell fill="#2e7d32" />
-                    <Cell fill="#d32f2f" />
+                    <Cell fill="#0a4e97" />
+                    <Cell fill="#1083ee" />
                   </Pie>
                   <Tooltip />
                 </PieChart>

@@ -32,6 +32,7 @@ import {
   CalendarToday,
   AccessTime,
   PersonAdd,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
@@ -52,6 +53,8 @@ const Dashboard = () => {
     pendingBookings: 0,
     approvedBookings: 0,
     rejectedBookings: 0,
+    totalSchedules: 0,
+    availableSchedules: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -72,6 +75,62 @@ const Dashboard = () => {
       const bookingsRes = await axiosInstance.get('/bookings');
       const bookings = bookingsRes.data?.data || bookingsRes.data || [];
 
+      const schedulesRes = await axiosInstance.get('/schedules');
+      const schedules = schedulesRes.data?.data || schedulesRes.data || [];
+
+      const now = new Date();
+
+      // ✅ Check if a schedule is bookable
+      const isScheduleBookable = (schedule) => {
+        const meetingDate = new Date(schedule.meetingDate);
+        const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+        const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+        
+        const meetingStart = new Date(meetingDate);
+        meetingStart.setHours(startHour, startMinute, 0, 0);
+        
+        const meetingEnd = new Date(meetingDate);
+        meetingEnd.setHours(endHour, endMinute, 0, 0);
+        
+        const meetingEndWithGrace = new Date(meetingEnd.getTime() + 5 * 60 * 1000);
+        
+        // Check if ended
+        if (now > meetingEndWithGrace) return false;
+        
+        // Check if in progress
+        if (now >= meetingStart && now <= meetingEnd) return false;
+        
+        // Check if too early (more than 5 days before)
+        const daysUntilStart = Math.floor((meetingStart - now) / (1000 * 60 * 60 * 24));
+        if (daysUntilStart > 5) return false;
+        
+        // Check if full
+        const capacity = schedule.room?.maxCapacity || schedule.maxCapacity || 0;
+        const bookingsCount = schedule.currentBookings || schedule.bookings?.length || 0;
+        if (capacity - bookingsCount <= 0) return false;
+        
+        return true;
+      };
+
+      // ✅ Active schedules (not ended)
+      const activeSchedules = schedules.filter(schedule => {
+        const meetingDate = new Date(schedule.meetingDate);
+        const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+        const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+        
+        const meetingStart = new Date(meetingDate);
+        meetingStart.setHours(startHour, startMinute, 0, 0);
+        
+        const meetingEnd = new Date(meetingDate);
+        meetingEnd.setHours(endHour, endMinute, 0, 0);
+        
+        const meetingEndWithGrace = new Date(meetingEnd.getTime() + 5 * 60 * 1000);
+        return now <= meetingEndWithGrace;
+      });
+
+      // ✅ Bookable schedules (active + has seats + within 5-day window + not in progress)
+      const bookableSchedules = activeSchedules.filter(isScheduleBookable);
+
       const myBookings = bookings.filter(
         b => b.scheduledBy?._id === user?.id || 
              b.scheduledBy === user?.id || 
@@ -89,6 +148,8 @@ const Dashboard = () => {
         pendingBookings,
         approvedBookings,
         rejectedBookings,
+        totalSchedules: activeSchedules.length,
+        availableSchedules: bookableSchedules.length, // ✅ Now counts bookable schedules
       });
 
       const sorted = [...bookings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -122,33 +183,41 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ Handle navigation with URL parameters
+  const handleNavigateToRooms = (filterType) => {
+    navigate(`/rooms?filter=${filterType}`);
+  };
+
   const statsCards = [
     { 
       icon: <MeetingRoom sx={{ fontSize: isMobile ? 22 : 28 }} />, 
       value: stats.totalRooms, 
       label: 'Total Rooms', 
-      color: '#1976d2',
-      bgColor: '#e3f2fd',
-      iconBg: '#bbdefb',
-      path: '/rooms'
+      color: '#07437e',
+      bgColor: '#d8e0e6',
+      iconBg: '#d4dde4',
+      path: '/rooms',
+      filter: 'unique'
+    },
+    { 
+      icon: <ScheduleIcon sx={{ fontSize: isMobile ? 22 : 28 }} />, 
+      value: stats.totalSchedules, 
+      label: 'Total Schedules', 
+      color: '#0b457f',
+      bgColor: '#d5dde3',
+      iconBg: '#d3dce3',
+      path: '/rooms',
+      filter: 'all'
     },
     { 
       icon: <EventAvailable sx={{ fontSize: isMobile ? 22 : 28 }} />, 
-      value: stats.availableRooms, 
-      label: 'Available Rooms', 
-      color: '#2e7d32',
-      bgColor: '#e8f5e9',
-      iconBg: '#c8e6c9',
-      path: '/rooms'
-    },
-    { 
-      icon: <People sx={{ fontSize: isMobile ? 22 : 28 }} />, 
-      value: stats.myBookings, 
-      label: 'My Bookings', 
-      color: '#9c27b0',
-      bgColor: '#f3e5f5',
-      iconBg: '#e1bee7',
-      path: '/bookings'
+      value: stats.availableSchedules, 
+      label: 'Available Schedules', 
+      color: '#083979',
+      bgColor: '#dae1e8',
+      iconBg: '#d4dbe3',
+      path: '/rooms',
+      filter: 'bookable' // ✅ Changed from 'active' to 'bookable'
     },
   ];
 
@@ -190,7 +259,6 @@ const Dashboard = () => {
             width: '100%',
           }}
         >
-          {/* Dashboard Title - Clean, no blue banner */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -202,7 +270,7 @@ const Dashboard = () => {
                 fontWeight="600" 
                 sx={{ 
                   fontSize: { xs: '1.8rem', sm: '2.1rem', md: '2.4rem' },
-                  color: '#0a1628',
+                  color: '#082857',
                   mb: 1.5
                 }}
               >
@@ -226,7 +294,6 @@ const Dashboard = () => {
             </Alert>
           )}
 
-          {/* Stats Cards - Compact & Equal */}
           <Grid container spacing={{ xs: 1, sm: 1.5, md: 3 }} sx={{ mb: { xs: 1.5, sm: 3, md: 2.5 } }}>
             {statsCards.map((stat, i) => (
               <Grid item xs={6} md={4} key={i}>
@@ -250,7 +317,7 @@ const Dashboard = () => {
                       display: 'flex',
                       alignItems: 'center',
                     }}
-                    onClick={() => navigate(stat.path)}
+                    onClick={() => handleNavigateToRooms(stat.filter)}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, width: '100%' }}>
                       <Box
@@ -291,7 +358,6 @@ const Dashboard = () => {
             ))}
           </Grid>
 
-          {/* My Booking Status - Compact */}
           <Paper sx={{ 
             p: { xs: 1.5, sm: 2, md: 2.5 }, 
             borderRadius: { xs: 2, sm: 2, md: 3 }, 
@@ -309,10 +375,10 @@ const Dashboard = () => {
             </Typography>
             <Grid container spacing={{ xs: 1, sm: 1.5 }} sx={{ width: '100%', mx: 0 }}>
               <Grid item xs={4}>
-                <Box sx={{ textAlign: 'center', p: { xs: 1, sm: 1.5 }, bgcolor: '#fff3e0', borderRadius: 2 }}>
+                <Box sx={{ textAlign: 'center', p: { xs: 1, sm: 1.5 }, bgcolor: '#dce4ea', borderRadius: 2 }}>
                   <Typography 
                     variant="h4" 
-                    color="#ed6c02"
+                    color="#063372"
                     sx={{ fontSize: { xs: '1.8rem', sm: '2.1rem', md: '2.4rem' } }}
                   >
                     {stats.pendingBookings}
@@ -327,16 +393,16 @@ const Dashboard = () => {
                   <LinearProgress 
                     variant="determinate" 
                     value={stats.myBookings > 0 ? (stats.pendingBookings / stats.myBookings) * 100 : 0} 
-                    sx={{ mt: 0.5, height: 4, borderRadius: 2, bgcolor: '#ffe0b2' }}
+                    sx={{ mt: 0.5, height: 4, borderRadius: 2, bgcolor: '#dae0e6' }}
                     color="warning"
                   />
                 </Box>
               </Grid>
               <Grid item xs={4}>
-                <Box sx={{ textAlign: 'center', p: { xs: 1, sm: 1.5 }, bgcolor: '#e8f5e9', borderRadius: 2 }}>
+                <Box sx={{ textAlign: 'center', p: { xs: 1, sm: 1.5 }, bgcolor: '#d6dee4', borderRadius: 2 }}>
                   <Typography 
                     variant="h4" 
-                    color="#2e7d32"
+                    color="#0b4b94"
                     sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' } }}
                   >
                     {stats.approvedBookings}
@@ -351,16 +417,16 @@ const Dashboard = () => {
                   <LinearProgress 
                     variant="determinate" 
                     value={stats.myBookings > 0 ? (stats.approvedBookings / stats.myBookings) * 100 : 0} 
-                    sx={{ mt: 0.5, height: 4, borderRadius: 2, bgcolor: '#c8e6c9' }}
+                    sx={{ mt: 0.5, height: 4, borderRadius: 2, bgcolor: '#d7dfe7' }}
                     color="success"
                   />
                 </Box>
               </Grid>
               <Grid item xs={4}>
-                <Box sx={{ textAlign: 'center', p: { xs: 1, sm: 1.5 }, bgcolor: '#ffebee', borderRadius: 2 }}>
+                <Box sx={{ textAlign: 'center', p: { xs: 1, sm: 1.5 }, bgcolor: '#dee4ea', borderRadius: 2 }}>
                   <Typography 
                     variant="h4" 
-                    color="#d32f2f"
+                    color="#0e57b1"
                     sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' } }}
                   >
                     {stats.rejectedBookings}
@@ -375,7 +441,7 @@ const Dashboard = () => {
                   <LinearProgress 
                     variant="determinate" 
                     value={stats.myBookings > 0 ? (stats.rejectedBookings / stats.myBookings) * 100 : 0} 
-                    sx={{ mt: 0.5, height: 4, borderRadius: 2, bgcolor: '#ffcdd2' }}
+                    sx={{ mt: 0.5, height: 4, borderRadius: 2, bgcolor: '#dde3ea' }}
                     color="error"
                   />
                 </Box>
@@ -383,7 +449,6 @@ const Dashboard = () => {
             </Grid>
           </Paper>
 
-          {/* Quick Actions - Centered */}
           <Box sx={{ 
             display: 'flex', 
             flexDirection: 'column', 
@@ -418,10 +483,12 @@ const Dashboard = () => {
                   variant="contained"
                   fullWidth
                   startIcon={<MeetingRoom sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  onClick={() => navigate('/rooms')}
+                  onClick={() => handleNavigateToRooms('unique')}
                   sx={{ 
                     py: { xs: 1, sm: 1.2 }, 
                     borderRadius: 2,
+                     bgcolor: '#063b85',
+                    '&:hover': { bgcolor: '#1271f6' },
                     textTransform: 'none',
                     fontWeight: 600,
                     fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.85rem' },
@@ -439,8 +506,8 @@ const Dashboard = () => {
                   sx={{ 
                     py: { xs: 1, sm: 1.2 }, 
                     borderRadius: 2, 
-                    bgcolor: '#ed6c02',
-                    '&:hover': { bgcolor: '#e65100' },
+                    bgcolor: '#073b84',
+                    '&:hover': { bgcolor: '#1271f6' },
                     textTransform: 'none',
                     fontWeight: 600,
                     fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.85rem' },
@@ -452,7 +519,6 @@ const Dashboard = () => {
             </Grid>
           </Box>
 
-          {/* Recent Bookings - Compact */}
           <Paper sx={{ 
             p: { xs: 1.5, sm: 2, md: 2.5 }, 
             borderRadius: { xs: 2, sm: 2, md: 3 },
@@ -489,7 +555,7 @@ const Dashboard = () => {
                   variant="outlined" 
                   size="small"
                   sx={{ mt: 1, borderRadius: 2 }}
-                  onClick={() => navigate('/rooms')}
+                  onClick={() => handleNavigateToRooms('unique')}
                 >
                   Book a Room
                 </Button>
@@ -529,7 +595,7 @@ const Dashboard = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
                         <Avatar 
                           sx={{ 
-                            bgcolor: '#1976d2',
+                            bgcolor: '#0b56a1',
                             width: { xs: 28, sm: 32 },
                             height: { xs: 28, sm: 32 },
                           }}
@@ -564,8 +630,7 @@ const Dashboard = () => {
                             <Typography 
                               variant="caption" 
                               color="text.secondary" 
-                              sx={{ display: 'flex', alignItems: 'center', gap: 0.3, fontSize: { xs: '0.6rem', sm: '0.7rem' } }}
-                            >
+                              sx={{ display: 'flex', alignItems: 'center', gap: 0.3, fontSize: { xs: '0.6rem', sm: '0.7rem' } }} >
                               <PersonAdd sx={{ fontSize: { xs: 10, sm: 12 } }} />
                               {booking.numberOfGuests} guests
                             </Typography>
@@ -581,17 +646,6 @@ const Dashboard = () => {
               ))
             )}
           </Paper>
-
-          {/* Footer Info - Compact */}
-          <Box sx={{ mt: { xs: 1.5, sm: 2 }, textAlign: 'center' }}>
-            <Typography 
-              variant="caption" 
-              color="text.secondary"
-              sx={{ fontSize: { xs: '0.6rem', sm: '0.65rem' } }}
-            >
-              © {new Date().getFullYear()} ESS MRBS - Meeting Room Booking System
-            </Typography>
-          </Box>
         </Container>
       </Box>
 

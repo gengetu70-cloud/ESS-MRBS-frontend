@@ -28,12 +28,13 @@ import {
   Room,
   Assessment,
   Schedule,
+  EventAvailable,
   Close as CloseIcon,
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axios';
-import AdminBookingScheduler from '../components/AdminBookingScheduler'; // Import the new component
+import AdminBookingScheduler from '../components/AdminBookingScheduler';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -43,8 +44,8 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalRooms: 0,
-    totalBookings: 0,
-    availableRooms: 0,
+    totalSchedules: 0,
+    availableSchedules: 0,
     bookedRooms: 0,
     pendingBookings: 0,
     approvedBookings: 0,
@@ -52,7 +53,6 @@ const AdminDashboard = () => {
     teaServiceRequests: 0,
   });
   
-  // State for Admin Booking Scheduler Dialog
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [rooms, setRooms] = useState([]);
@@ -67,20 +67,64 @@ const AdminDashboard = () => {
       setLoading(true);
       setError('');
 
-      // Fetch users
       const usersRes = await axiosInstance.get('/users');
       const users = usersRes.data.data || [];
 
-      // Fetch rooms
       const roomsRes = await axiosInstance.get('/rooms');
       const rooms = roomsRes.data.data || [];
-      setRooms(rooms); // Store rooms for scheduler
+      setRooms(rooms);
 
-      // Fetch bookings
       const bookingsRes = await axiosInstance.get('/bookings');
       const bookings = bookingsRes.data.data || [];
 
-      // Calculate stats
+      // ✅ Fetch schedules
+      const schedulesRes = await axiosInstance.get('/schedules');
+      const schedules = schedulesRes.data.data || [];
+
+      // ✅ Calculate active schedules (not ended with 5-minute grace period)
+      const now = new Date();
+      const activeSchedules = schedules.filter(schedule => {
+        const meetingDate = new Date(schedule.meetingDate);
+        const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+        const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+        
+        const meetingStart = new Date(meetingDate);
+        meetingStart.setHours(startHour, startMinute, 0, 0);
+        
+        const meetingEnd = new Date(meetingDate);
+        meetingEnd.setHours(endHour, endMinute, 0, 0);
+        
+        const meetingEndWithGrace = new Date(meetingEnd.getTime() + 5 * 60 * 1000);
+        return now <= meetingEndWithGrace;
+      });
+
+      // ✅ Calculate bookable schedules (active + has seats + within 5-day window + not in progress)
+      const bookableSchedules = activeSchedules.filter(schedule => {
+        const meetingDate = new Date(schedule.meetingDate);
+        const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+        const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+        
+        const meetingStart = new Date(meetingDate);
+        meetingStart.setHours(startHour, startMinute, 0, 0);
+        
+        const meetingEnd = new Date(meetingDate);
+        meetingEnd.setHours(endHour, endMinute, 0, 0);
+        
+        // Check if in progress
+        if (now >= meetingStart && now <= meetingEnd) return false;
+        
+        // Check if too early (more than 5 days before)
+        const daysUntilStart = Math.floor((meetingStart - now) / (1000 * 60 * 60 * 24));
+        if (daysUntilStart > 5) return false;
+        
+        // Check if full
+        const capacity = schedule.room?.maxCapacity || schedule.maxCapacity || 0;
+        const bookingsCount = schedule.currentBookings || schedule.bookings?.length || 0;
+        if (capacity - bookingsCount <= 0) return false;
+        
+        return true;
+      });
+
       const availableRooms = rooms.filter(r => r.status === 'available').length;
       const bookedRooms = rooms.filter(r => r.status === 'booked').length;
       const pendingBookings = bookings.filter(b => b.status === 'pending').length;
@@ -91,8 +135,8 @@ const AdminDashboard = () => {
       setStats({
         totalUsers: users.length,
         totalRooms: rooms.length,
-        totalBookings: bookings.length,
-        availableRooms,
+        totalSchedules: activeSchedules.length,
+        availableSchedules: bookableSchedules.length,
         bookedRooms,
         pendingBookings,
         approvedBookings,
@@ -108,37 +152,35 @@ const AdminDashboard = () => {
     }
   };
 
-  // Open schedule dialog
   const handleOpenScheduleDialog = () => {
     if (rooms.length === 0) {
       setError('No rooms available to schedule. Please add rooms first.');
       return;
     }
-    setSelectedRoom(rooms[0]); // Select first room by default
+    setSelectedRoom(rooms[0]);
     setScheduleDialogOpen(true);
   };
 
-  // Close schedule dialog
   const handleCloseScheduleDialog = () => {
     setScheduleDialogOpen(false);
     setSelectedRoom(null);
   };
 
-  // Handle successful scheduling
   const handleScheduleSuccess = (ticketData) => {
     console.log('✅ Schedule success:', ticketData);
-    // Refresh dashboard data
     fetchDashboardData();
-    // Close dialog after a delay
     setTimeout(() => {
       handleCloseScheduleDialog();
     }, 2000);
   };
 
-  // Handle scheduling error
   const handleScheduleError = (error) => {
     console.error('❌ Schedule error:', error);
-    // Error is already shown in the scheduler component
+  };
+
+  // ✅ Handle navigation with URL parameters
+  const handleNavigateToRooms = (filterType) => {
+    navigate(`/rooms?filter=${filterType}`);
   };
 
   if (loading) {
@@ -157,29 +199,29 @@ const AdminDashboard = () => {
       title: 'Total Users',
       value: stats.totalUsers,
       icon: <People sx={{ fontSize: 40 }} />,
-      color: '#1976d2',
+      color: '#0d59a6',
       action: '/admin/users',
     },
     {
       title: 'Total Rooms',
       value: stats.totalRooms,
       icon: <MeetingRoom sx={{ fontSize: 40 }} />,
-      color: '#2e7d32',
+      color: '#0a5b9e',
       action: '/admin/rooms',
     },
     {
-      title: 'Total Bookings',
-      value: stats.totalBookings,
-      icon: <BookOnline sx={{ fontSize: 40 }} />,
-      color: '#ed6c02',
-      action: '/admin/bookings',
+      title: 'Total Schedules',
+      value: stats.totalSchedules,
+      icon: <Schedule sx={{ fontSize: 40 }} />,
+      color: '#0a5ea3',
+      action: () => handleNavigateToRooms('all'),
     },
     {
-      title: 'Available Rooms',
-      value: stats.availableRooms,
-      icon: <MeetingRoom sx={{ fontSize: 40 }} />,
-      color: '#2e7d32',
-      action: '/rooms',
+      title: 'Available Schedules',
+      value: stats.availableSchedules,
+      icon: <EventAvailable sx={{ fontSize: 40 }} />,
+      color: '#064d9e',
+      action: () => handleNavigateToRooms('bookable'),
     },
   ];
 
@@ -187,7 +229,6 @@ const AdminDashboard = () => {
     <>
       <Navbar />
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        {/* Welcome Section */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
             Admin Dashboard
@@ -203,7 +244,6 @@ const AdminDashboard = () => {
           </Alert>
         )}
 
-        {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 5 }}>
           {statCards.map((stat, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
@@ -215,18 +255,26 @@ const AdminDashboard = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   borderRadius: 2,
-                  cursor: stat.action && stat.action !== '#' ? 'pointer' : 'default',
+                  cursor: stat.action ? 'pointer' : 'default',
                   '&:hover': {
-                    boxShadow: stat.action && stat.action !== '#' ? 6 : 2,
+                    boxShadow: stat.action ? 6 : 2,
                   },
                 }}
-                onClick={() => stat.action && stat.action !== '#' && navigate(stat.action)}
+                onClick={() => {
+                  if (stat.action) {
+                    if (typeof stat.action === 'function') {
+                      stat.action();
+                    } else {
+                      navigate(stat.action);
+                    }
+                  }
+                }}
               >
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
                     {stat.value}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color='#060f19'>
                     {stat.title}
                   </Typography>
                 </Box>
@@ -236,7 +284,6 @@ const AdminDashboard = () => {
           ))}
         </Grid>
 
-        {/* Quick Actions */}
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
           Quick Actions
         </Typography>
@@ -248,7 +295,7 @@ const AdminDashboard = () => {
               size="large"
               startIcon={<PersonAdd />}
               onClick={() => navigate('/admin/users')}
-              sx={{ py: 2 }}
+              sx={{ py: 2, bgcolor: '#08437a', '&:hover': { bgcolor: '#0f72d6' } }}
             >
               Manage Users
             </Button>
@@ -260,7 +307,7 @@ const AdminDashboard = () => {
               size="large"
               startIcon={<Room />}
               onClick={() => navigate('/admin/rooms')}
-              sx={{ py: 2, bgcolor: '#2e7d32', '&:hover': { bgcolor: '#1b5e20' } }}
+              sx={{ py: 2, bgcolor: '#08437a', '&:hover': { bgcolor: '#0f72d6' } }}
             >
               Manage Rooms
             </Button>
@@ -272,7 +319,7 @@ const AdminDashboard = () => {
               size="large"
               startIcon={<Assessment />}
               onClick={() => navigate('/admin/reports')}
-              sx={{ py: 2, bgcolor: '#ed6c02', '&:hover': { bgcolor: '#e65100' } }}
+              sx={{ py: 2, bgcolor: '#094883', '&:hover': { bgcolor: '#1284e2' } }}
             >
               View Reports
             </Button>
@@ -284,27 +331,26 @@ const AdminDashboard = () => {
               size="large"
               startIcon={<BookOnline />}
               onClick={() => navigate('/admin/bookings')}
-              sx={{ py: 2, bgcolor: '#9c27b0', '&:hover': { bgcolor: '#7b1fa2' } }}
+              sx={{ py: 2, bgcolor: '#094381', '&:hover': { bgcolor: '#0e76e6' } }}
             >
               Manage Bookings
             </Button>
           </Grid>
         </Grid>
 
-        {/* NEW: Admin Schedule Section */}
         <Paper
           elevation={2}
           sx={{
             p: 3,
             borderRadius: 2,
             mb: 4,
-            background: 'linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%)',
-            border: '1px solid #90caf9',
+            background: 'linear-gradient(135deg, #e3e9ed 0%, #f5f5f5 100%)',
+            border: '1px solid #b9c9d7',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Schedule sx={{ fontSize: 40, color: '#1976d2' }} />
+              <Schedule sx={{ fontSize: 40, color: '#0a4a89' }} />
               <Box>
                 <Typography variant="h6" fontWeight="bold" color="primary">
                   Admin Booking Scheduler
@@ -322,8 +368,8 @@ const AdminDashboard = () => {
               sx={{ 
                 py: 1.5,
                 px: 4,
-                bgcolor: '#1976d2',
-                '&:hover': { bgcolor: '#1565c0' }
+                bgcolor: '#0b457e',
+                '&:hover': { bgcolor: '#1372dd' }
               }}
             >
               Schedule New Meeting
@@ -331,7 +377,6 @@ const AdminDashboard = () => {
           </Box>
         </Paper>
 
-        {/* Booking Statistics */}
         <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 4 }}>
             Booking Statistics
@@ -381,7 +426,6 @@ const AdminDashboard = () => {
         </Paper>
       </Container>
 
-      {/* Admin Booking Scheduler Dialog */}
       <Dialog
         open={scheduleDialogOpen}
         onClose={handleCloseScheduleDialog}
@@ -413,7 +457,6 @@ const AdminDashboard = () => {
         </DialogTitle>
         
         <DialogContent sx={{ p: 3 }}>
-          {/* Room Selector */}
           {rooms.length > 0 && (
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -430,8 +473,8 @@ const AdminDashboard = () => {
                         borderRadius: 2,
                         textTransform: 'none',
                         ...(selectedRoom?._id === room._id && {
-                          bgcolor: '#1976d2',
-                          '&:hover': { bgcolor: '#1565c0' }
+                          bgcolor: '#0a427b',
+                          '&:hover': { bgcolor: '#1272df' }
                         })
                       }}
                     >
@@ -443,7 +486,6 @@ const AdminDashboard = () => {
             </Box>
           )}
 
-          {/* Admin Booking Scheduler Component */}
           {selectedRoom && (
             <AdminBookingScheduler
               room={selectedRoom}

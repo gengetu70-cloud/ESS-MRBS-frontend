@@ -420,27 +420,6 @@ const ManageRooms = () => {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    multiline
-                    rows={2}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Amenities (comma separated)"
-                    name="amenities"
-                    value={formData.amenities}
-                    onChange={handleChange}
-                    placeholder="Projector, WiFi, Whiteboard"
-                  />
-                </Grid>
               </Grid>
             </Box>
           </DialogContent>

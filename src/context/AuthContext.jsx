@@ -23,12 +23,13 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = async (userData) => {
+    // Store user in state (token is already in HttpOnly cookie from backend)
     setUser(userData);
   };
 
-  const logout = () => {
-    logoutUser();
+  const logout = async () => {
+    await logoutUser(); // This calls the API to clear the cookie
     setUser(null);
   };
 

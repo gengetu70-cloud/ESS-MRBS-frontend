@@ -12,18 +12,11 @@ export const login = async (username, password) => {
     
     console.log('✅ Login response:', response.data);
     
-    // FIXED: Check if response exists and handle different structures
     if (response && response.data) {
       const data = response.data;
       
-      // Check if login was successful
       if (data.success === true) {
-        // Store token if present
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-        
-        // Store user if present
+        // Store user if present (token is automatically stored in HttpOnly cookie)
         const user = data.user || data.data?.user || data.data;
         if (user) {
           localStorage.setItem('user', JSON.stringify(user));
@@ -32,18 +25,15 @@ export const login = async (username, password) => {
         return {
           success: true,
           user: user,
-          token: data.token,
           message: data.message || 'Login successful',
         };
       } else {
-        // Login failed but response was successful
         return {
           success: false,
           message: data.message || 'Login failed',
         };
       }
     } else {
-      // No response data
       return {
         success: false,
         message: 'No response from server',
@@ -52,9 +42,7 @@ export const login = async (username, password) => {
   } catch (error) {
     console.error('❌ Login API error:', error);
     
-    // Better error handling
     if (error.response) {
-      // Server responded with error
       console.error('Server error response:', error.response.data);
       const data = error.response.data;
       return {
@@ -63,15 +51,11 @@ export const login = async (username, password) => {
         error: data,
       };
     } else if (error.request) {
-      // Request made but no response
-      console.error('No response from server:', error.request);
       return {
         success: false,
         message: 'Network error. Please check your connection.',
       };
     } else {
-      // Something else
-      console.error('Error:', error.message);
       return {
         success: false,
         message: error.message || 'An error occurred during login',
@@ -88,6 +72,12 @@ export const register = async (userData) => {
     console.log('✅ Register response:', response.data);
     
     if (response.data && response.data.success) {
+      // Store user if present (token is automatically stored in HttpOnly cookie)
+      const user = response.data.user || response.data.data?.user || response.data.data;
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      
       return {
         success: true,
         data: response.data,
@@ -123,28 +113,38 @@ export const register = async (userData) => {
 };
 
 // Logout user
-export const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  console.log('🔓 Logged out successfully');
-  return { success: true, message: 'Logged out successfully' };
+export const logout = async () => {
+  try {
+    const response = await axiosInstance.post('/auth/logout');
+    localStorage.removeItem('user');
+    console.log('🔓 Logged out successfully');
+    return { 
+      success: true, 
+      message: response.data?.message || 'Logged out successfully' 
+    };
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    // Still clear local storage even if API call fails
+    localStorage.removeItem('user');
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Logout failed' 
+    };
+  }
 };
 
 // Get current user
 export const getCurrentUser = async () => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('⚠️ No token found');
-      return { success: false, message: 'No token found' };
-    }
-    
     console.log('🔍 Getting current user...');
     const response = await axiosInstance.get('/auth/me');
     console.log('✅ Current user response:', response.data);
     
     if (response.data && response.data.success) {
       const user = response.data.user || response.data.data?.user || response.data.data;
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
       return {
         success: true,
         user: user,
@@ -224,13 +224,14 @@ export const changePassword = async (oldPassword, newPassword) => {
 
 // Check if user is authenticated
 export const isAuthenticated = () => {
-  const token = localStorage.getItem('token');
-  return !!token;
+  // Check if user exists in localStorage (token is in HttpOnly cookie)
+  const user = localStorage.getItem('user');
+  return !!user;
 };
 
-// Get auth token
+// Get auth token (no longer needed for manual storage, but kept for compatibility)
 export const getAuthToken = () => {
-  return localStorage.getItem('token');
+  return null; // Token is in HttpOnly cookie, not accessible via JavaScript
 };
 
 // Get current user from localStorage
