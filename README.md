@@ -1,16 +1,118 @@
-# React + Vite
+# ESS Meeting Room Booking System (ESS-MRBS) - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Project Description
 
-Currently, two official plugins are available:
+The ESS Meeting Room Booking System (ESS-MRBS) Frontend is a React-based web application developed for the Ethiopian Statistical Service (ESS). It provides separate interfaces for administrators and registered users. Administrators can manage users, rooms, and meeting schedules, while registered users can view available meeting schedules and book meeting rooms.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Technologies Used
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React.js
+- Vite
+- JavaScript (ES6)
+- HTML5
+- CSS3
+- Axios
+- React Router DOM
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+### Frontend
+- React.js
+- Vite
+- Material UI
+
+### API Communication
+- Axios
+
+### Routing
+- React Router DOM
+
+### Development Tools
+| Tool | Purpose |
+|------|---------|
+| Visual Studio Code | Code editor |
+| Postman | API testing |
+| Git | Version control |
+| GitHub | Remote repository |
+
+## Project Structure
+
+frontend/
+│
+├── public/
+├── src/
+│   ├── Admin/
+│   ├── api/
+│   ├── assets/
+│   ├── components/
+│   ├── context/
+│   ├── pages/
+│   ├── services/
+│   ├── utils/
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
+│
+├── package.json
+├── package-lock.json
+├── vite.config.js
+---
+
+## Installation
+
+Clone the repository
+
+git clone https://github.com/gengetu70-cloud/ESS-MRBS-frontend.git
+
+Go to the frontend folder
+
+cd frontend
+
+Install dependencies
+
+npm install
+create a .env file
+VITE_API_URL=http://localhost:5000/api
+Start the development server
+
+npm run dev
+
+The application will run at:
+
+http://localhost:5173
+---
+
+## Features
+
+### Administrator
+
+- User Management
+- Room Management
+- Meeting Schedule Management
+- Booking Management
+- Reports Dashboard
+- 
+### Registered User
+
+- Login
+- View Available Meeting Schedules
+- Book Meeting Rooms
+- View Booking History
+- Profile Management
+
+---
+
+## Developers
+
+Haramaya University Students: 
+- Genet Getu, 
+- Gezu Kotu, 
+- Halima Siraj,
+  
+Developed for Ethiopian Statistical Service (ESS)
+
+2026
