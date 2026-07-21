@@ -133,9 +133,9 @@ http://localhost:5173
 
 Haramaya University Students
 
-- Genet Getu, 
-- Halima Siraj, 
-- Gezu Kotu, 
+- Genet Getu,   => Frontend Developer, Testing and QA
+- Halima Siraj, => Frontend Developer, React Component Developer
+- Gezu Kotu,    => Frontend Developer, UI/UX Designer
 
 
 Developed for Ethiopian Statistical Service (ESS)
